@@ -157,7 +157,7 @@ class dlgMain(QDialog):
         data = Reference(ws, min_col=1, min_row=2, max_row=len(self.result_x) + 1)
         c1.add_data(data)
 
-        for i in range(3, 4):
+        for i in range(2, 4):
             values = Reference(ws, min_col=i, min_row=1, max_row=len(self.result_x) + 1)
             series = Series(values, data, title_from_data=True)
             c1.series.append(series)
@@ -177,7 +177,7 @@ class dlgMain(QDialog):
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(self.img, self.sch, (x, y), 
                     font, 1, 
-                    (0, 255, 255), 
+                    (127, 125, 100),
                     2) 
                     
             cv2.imshow('image', self.img)
