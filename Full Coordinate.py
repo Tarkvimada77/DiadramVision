@@ -37,7 +37,7 @@ class Rotate(QtWidgets.QDialog):
 
         self.rotation = 0
 
-        self.pixmap = QtGui.QPixmap("crop_graph.png")
+        self.pixmap = QtGui.QPixmap("result.png")
 
         self.label = QLabel()
         self.label.setMinimumSize(600, 600)
@@ -77,9 +77,9 @@ class Rotate(QtWidgets.QDialog):
         self.label.setPixmap(pixmap)
 
     def save(self):
-        im = Image.open('crop_graph.png')
+        im = Image.open('result.png')
         im_rotate = im.rotate(is_pol(self.rotation), expand=True)
-        im_rotate.save('rotate_image.png', quality=95)
+        im_rotate.save('result.png', quality=95)
 
 
 
@@ -121,19 +121,20 @@ class Croping:
             min_y = min(self.list_rec[1], self.list_rec[3])
             max_y = max(self.list_rec[1], self.list_rec[3])
 
-            im.crop((min_x, min_y, max_x, max_y)).save('crop_graph.png', quality=95)
+            im.crop((min_x, min_y, max_x, max_y)).save('result.png', quality=95)
             cv2.imshow("Croping", self.image)
             self.list_rec = []
 
 
 # Наследование класса PyQt5
-class dlgMain(QMainWindow):
+class dlgMain(QtWidgets.QWidget):
 
     def __init__(self):
         # В конструкторе перемнных через супер получаем все селфы от наследования
         super(dlgMain, self).__init__()
 
         # Обьявляем пустые переменные
+        self.label = QLabel(self)
         self.puth = ""
         self.coord = []
         self.val = []
@@ -142,33 +143,45 @@ class dlgMain(QMainWindow):
         self.sch = "1"
         self.val1 = []
 
-        self.resize(518, 350)
+        self.setMinimumSize(608, 200)
         # Рисуем элементы окна
 
         self.button_crop = QPushButton("Обрезать", self)
         self.button_crop.setFont(QFont("Arial", 12))
-        self.button_crop.move(160, 175)
+        self.button_crop.move(460, 125)
         self.button_crop.clicked.connect(self.cropi)
 
         self.button_crop = QPushButton("Повернуть", self)
         self.button_crop.setFont(QFont("Arial", 12))
-        self.button_crop.move(60, 175)
+        self.button_crop.move(315, 125)
         self.button_crop.clicked.connect(self.rotata)
 
         self.button = QPushButton("Вычислить значения", self)
         self.button.setFont(QFont("Arial", 12))
-        self.button.move(60, 75)
+        self.button.move(340, 75)
         self.button.clicked.connect(self.save_value)
 
         self.button = QPushButton("Загрузить изображение", self)
         self.button.setFont(QFont("Arial", 12))
-        self.button.move(47, 25)
+        self.button.move(327, 25)
         self.button.clicked.connect(self.load_img)
 
     # Хендлер второй кнокпки
     def load_img(self):
+
         self.puth = QFileDialog.getOpenFileName(self, "open", getcwd(), "IMG (*.png *.jpg)")
-        self.img = cv2.imread(self.puth[0])
+
+        coping = Image.open(self.puth[0])
+        coping.save("result.png", quality=95)
+
+        self.img = cv2.imread("result.png")
+
+        pixmap = QPixmap(self.puth[0])
+        pixmap = pixmap.scaled(pixmap.width() // 2, pixmap.height() // 2)
+
+        
+        self.label.setPixmap(pixmap)
+        self.label.resize(pixmap.width(), pixmap.height())
 
         # Обнуляем параметры
         self.coord_y = []
@@ -214,7 +227,7 @@ class dlgMain(QMainWindow):
 
 
     def cropi(self):
-        self.cr = Croping(self.puth[0])
+        self.cr = Croping("result.png")
         self.cr.window()
 
     def rotata(self):
@@ -224,6 +237,11 @@ class dlgMain(QMainWindow):
 
     # Обработчик второй кнопки
     def save_value(self):
+        self.crp = cv2.imread("result.png")
+        cv2.imshow('image', self.crp)
+        cv2.setMouseCallback('image', self.mouse_click)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         if self.puth != "":
                         
@@ -299,7 +317,7 @@ class dlgMain(QMainWindow):
         data = Reference(ws, min_col=1, min_row=2, max_row=len(self.result_x) + 1)
         c1.add_data(data)
 
-        for i in range(3, 4):
+        for i in range(2, 4):
             values = Reference(ws, min_col=i, min_row=1, max_row=len(self.result_x) + 1)
             series = Series(values, data, title_from_data=True)
             c1.series.append(series)
@@ -416,6 +434,5 @@ if __name__ == "__main__":
     # Бесконечный цикл (луп) 
 
     sys.exit(app.exec_())
-
 
 
