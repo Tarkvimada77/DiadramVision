@@ -14,6 +14,77 @@ from PyQt5 import QtWidgets
 import cv2
 from PIL import Image
 import random
+import sys
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QGridLayout, QPushButton
+from PyQt5.QtGui import QPixmap
+from PIL import Image
+
+a = 0
+
+def is_pol(val):
+    if val < 0:
+        return abs(val)
+    elif val > 0:
+        return -val
+    else:
+        return 0
+
+class Rotate(QtWidgets.QDialog):
+    def __init__(self):
+        a = 1
+        super(Rotate, self).__init__()
+
+        self.rotation = 0
+
+        self.pixmap = QtGui.QPixmap("crop_graph.png")
+
+        self.label = QLabel()
+        self.label.setMinimumSize(600, 600)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setPixmap(self.pixmap)
+
+        button_min = QPushButton("Поворот вправо", self)
+        button_min.clicked.connect(self.rotate_pixmap_1)
+
+        button_max = QPushButton("Поворот влево", self)
+        button_max.clicked.connect(self.rotate_pixmap_2)
+
+        result = QPushButton("Сохранить")
+        result.clicked.connect(self.save)
+
+
+        grid = QGridLayout(self)
+        grid.addWidget(self.label, 0, 0)
+        grid.addWidget(button_min, 1, 0)
+        grid.addWidget(button_max, 2, 0)
+        grid.addWidget(result, 3, 0)
+
+    def rotate_pixmap_1(self):
+        pixmap = self.pixmap.copy()
+        self.rotation += 3
+        print(self.rotation)
+        transform = QtGui.QTransform().rotate(self.rotation)
+        pixmap = pixmap.transformed(transform, QtCore.Qt.SmoothTransformation)
+        self.label.setPixmap(pixmap)
+
+    def rotate_pixmap_2(self):
+        pixmap = self.pixmap.copy()
+        self.rotation -= 3
+        print(self.rotation)
+        transform = QtGui.QTransform().rotate(self.rotation)
+        pixmap = pixmap.transformed(transform, QtCore.Qt.SmoothTransformation)
+        self.label.setPixmap(pixmap)
+
+    def save(self):
+        im = Image.open('crop_graph.png')
+        im_rotate = im.rotate(is_pol(self.rotation), expand=True)
+        im_rotate.save('rotate_image.png', quality=95)
+
+
+
+        im.close()
+
 
 
 
@@ -55,15 +126,12 @@ class Croping:
             self.list_rec = []
 
 
-
-
-
 # Наследование класса PyQt5
-class dlgMain(QDialog):
+class dlgMain(QMainWindow):
 
     def __init__(self):
         # В конструкторе перемнных через супер получаем все селфы от наследования
-        super().__init__()
+        super(dlgMain, self).__init__()
 
         # Обьявляем пустые переменные
         self.puth = ""
@@ -74,8 +142,19 @@ class dlgMain(QDialog):
         self.sch = "1"
         self.val1 = []
 
-        self.resize(318, 150)
+        self.resize(518, 350)
         # Рисуем элементы окна
+
+        self.button_crop = QPushButton("Обрезать", self)
+        self.button_crop.setFont(QFont("Arial", 12))
+        self.button_crop.move(160, 175)
+        self.button_crop.clicked.connect(self.cropi)
+
+        self.button_crop = QPushButton("Повернуть", self)
+        self.button_crop.setFont(QFont("Arial", 12))
+        self.button_crop.move(60, 175)
+        self.button_crop.clicked.connect(self.rotata)
+
         self.button = QPushButton("Вычислить значения", self)
         self.button.setFont(QFont("Arial", 12))
         self.button.move(60, 75)
@@ -112,18 +191,37 @@ class dlgMain(QDialog):
 
         f = open('coordinatex.txt', 'w')
         f.close()
-        
 
-        cr = Croping(self.puth[0])
-        cr.window()
-        self.crp = cv2.imread("crop_graph.png")
+
+        #
+        # cr = Croping(self.puth[0])
+        # cr.window()
+        #
+        # rot = Rotate()
+        # rot.show()
+
+
+        # self.crp = cv2.imread("crop_graph.png")
+        # cv2.imshow('image', self.crp)
+        # cv2.setMouseCallback('image', self.mouse_click)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+
         # Рисуем окошко
             # self.button.setText("Вычислить")
-        cv2.imshow('image', self.crp)
-        cv2.setMouseCallback('image', self.mouse_click)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    
+
+
+
+    def cropi(self):
+        self.cr = Croping(self.puth[0])
+        self.cr.window()
+
+    def rotata(self):
+        self.rot = Rotate()
+        self.rot.show()
+
+
     # Обработчик второй кнопки
     def save_value(self):
 
@@ -156,6 +254,7 @@ class dlgMain(QDialog):
             
 
             # Высчитываем точку относительно послденей координанты, а после отнимаем максимальное значение
+
             for i in range(2, len(self.coord_x)):
                 self.result_x.append(abs(float(self.coord_x[i]) - float(self.coord_x[1])) / average_x)
 
